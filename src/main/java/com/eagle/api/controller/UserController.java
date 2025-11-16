@@ -3,7 +3,9 @@ package com.eagle.api.controller;
 import com.eagle.api.dto.CreateUserRequest;
 import com.eagle.api.dto.UpdateUserRequest;
 import com.eagle.api.dto.UserResponse;
+import com.eagle.api.exception.DeleteException;
 import com.eagle.api.exception.ForbiddenException;
+import com.eagle.api.service.AccountService;
 import com.eagle.api.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/users")
 public class UserController {
     private final UserService svc;
+    private final AccountService accountService;
 
-    public UserController(UserService svc) {
+    public UserController(UserService svc, AccountService accountService) {
         this.svc = svc;
+        this.accountService = accountService;
     }
 
     @PostMapping
@@ -42,6 +46,10 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
         verifyUser(userId);
+
+        if(!accountService.listAccounts(userId).getAccounts().isEmpty()) {
+            throw new DeleteException("User has associated bank accounts and cannot be deleted");
+        }
         svc.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }

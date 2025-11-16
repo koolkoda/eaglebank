@@ -20,14 +20,14 @@ public class TransactionService {
         this.accountService = accountService;
     }
 
-    public TransactionResponse createTransaction(String accountNumber, CreateTransactionRequest req) {
+    public TransactionResponse createTransaction(String userId, String accountNumber, CreateTransactionRequest req) {
         // validate account existence
-        accountService.getAccount(accountNumber);
+        accountService.getAccount(userId, accountNumber);
         BigDecimal amount = req.getAmount();
         BigDecimal delta = req.getType().equals("deposit") ? amount : amount.negate();
 
         try {
-            accountService.adjustBalance(accountNumber, delta);
+            accountService.adjustBalance(userId, accountNumber, delta);
         } catch (IllegalStateException e) {
             throw new IllegalArgumentException("Insufficient funds");
         }
@@ -44,16 +44,16 @@ public class TransactionService {
         return tr;
     }
 
-    public ListTransactionsResponse listTransactions(String accountNumber) {
-        accountService.getAccount(accountNumber);
+    public ListTransactionsResponse listTransactions(String userId, String accountNumber) {
+        accountService.getAccount(userId, accountNumber);
         List<TransactionResponse> list = new ArrayList<>(store.getOrDefault(accountNumber, Collections.emptyMap()).values());
         ListTransactionsResponse r = new ListTransactionsResponse();
         r.setTransactions(list);
         return r;
     }
 
-    public TransactionResponse getTransaction(String accountNumber, String transactionId) {
-        accountService.getAccount(accountNumber);
+    public TransactionResponse getTransaction(String userId, String accountNumber, String transactionId) {
+        accountService.getAccount(userId, accountNumber);
         Map<String, TransactionResponse> m = store.get(accountNumber);
         if (m == null || !m.containsKey(transactionId)) throw new NoSuchElementException("Transaction not found");
         return m.get(transactionId);

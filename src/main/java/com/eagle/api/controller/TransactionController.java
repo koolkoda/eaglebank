@@ -5,8 +5,10 @@ import com.eagle.api.dto.CreateTransactionRequest;
 import com.eagle.api.dto.ListTransactionsResponse;
 import com.eagle.api.dto.TransactionResponse;
 import com.eagle.api.service.TransactionService;
+import com.eagle.api.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,26 +16,34 @@ import org.springframework.web.bind.annotation.*;
 public class TransactionController {
 
     private final TransactionService svc;
+    private final UserService userService;
 
-    public TransactionController(TransactionService svc) {
+    public TransactionController(TransactionService svc, UserService userService) {
         this.svc = svc;
+        this.userService = userService;
     }
 
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@PathVariable String accountNumber,
                                                                  @Valid @RequestBody CreateTransactionRequest req) {
-        TransactionResponse tr = svc.createTransaction(accountNumber, req);
+        TransactionResponse tr = svc.createTransaction(getCurrentUserId(), accountNumber, req);
         return ResponseEntity.status(201).body(tr);
     }
 
     @GetMapping
     public ResponseEntity<ListTransactionsResponse> listTransactions(@PathVariable String accountNumber) {
-        return ResponseEntity.ok(svc.listTransactions(accountNumber));
+        return ResponseEntity.ok(svc.listTransactions(getCurrentUserId(), accountNumber));
     }
 
     @GetMapping("/{transactionId}")
     public ResponseEntity<TransactionResponse> fetchTransaction(@PathVariable String accountNumber,
                                                                 @PathVariable String transactionId) {
-        return ResponseEntity.ok(svc.getTransaction(accountNumber, transactionId));
+        return ResponseEntity.ok(svc.getTransaction(getCurrentUserId(), accountNumber, transactionId));
+    }
+
+    private String getCurrentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return this.userService.getUserIdByEmail(email);
     }
 }
