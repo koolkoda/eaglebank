@@ -3,6 +3,7 @@ package com.eagle.api.service;
 import com.eagle.api.dto.CreateUserRequest;
 import com.eagle.api.dto.UpdateUserRequest;
 import com.eagle.api.dto.UserResponse;
+import com.eagle.api.exception.UserExistsException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +30,8 @@ public class UserService {
     }
 
     public UserResponse createUser(CreateUserRequest req) {
+        String email = req.getEmail().trim().toLowerCase();
+
         String id = generateUserId();
         Instant now = Instant.now();
         UserResponse userResponse = new UserResponse();
@@ -36,19 +39,30 @@ public class UserService {
         userResponse.setName(req.getName());
         userResponse.setAddress(req.getAddress());
         userResponse.setPhoneNumber(req.getPhoneNumber());
-        userResponse.setEmail(req.getEmail());
+        userResponse.setEmail(email);
         userResponse.setCreatedTimestamp(now.toString());
         userResponse.setUpdatedTimestamp(now.toString());
 
-        users.put(id, userResponse);
-        emailToId.put(req.getEmail(), id);
+        String existing = emailToId.putIfAbsent(email, id);
+        if (existing != null) {
+            throw new UserExistsException("User with email already exists");
+        }
 
-        UserDetails userDetails = User.withUsername(req.getEmail())
-                .password(encoder.encode(req.getEmail()))
+        UserDetails userDetails = User.withUsername(email)
+                .password(encoder.encode(email))
                 .roles("USER")
                 .build();
 
-        this.userDetailsManager.createUser(userDetails);
+        try {
+            this.userDetailsManager.createUser(userDetails);
+        } catch (RuntimeException ex) {
+            // rollback partial state
+            emailToId.remove(email);
+            throw ex;
+        }
+
+        // put the user after successful reservation
+        users.put(id, userResponse);
 
         return userResponse;
     }
