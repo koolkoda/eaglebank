@@ -1,6 +1,7 @@
 package com.eagle.api.controller;
 
 import com.eagle.api.dto.CreateUserRequest;
+import com.eagle.api.dto.ListBankAccountsResponse;
 import com.eagle.api.dto.UpdateUserRequest;
 import com.eagle.api.dto.UserResponse;
 import com.eagle.api.exception.DeleteException;
@@ -34,9 +35,6 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> fetchUser(@PathVariable String userId) {
-        if(!userService.existsById(userId)) {
-            throw new UserNotFoundException("User not found");
-        }
         verifyUser(userId);
 
         return ResponseEntity.ok(userService.getUser(userId));
@@ -53,14 +51,22 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
         verifyUser(userId);
 
-        if(!accountService.listAccounts(userId).getAccounts().isEmpty()) {
-            throw new DeleteException("User has associated bank accounts and cannot be deleted");
+        var listBankAccountsResponse = accountService.listAccounts(userId);
+        if(listBankAccountsResponse != null) {
+            var accounts = listBankAccountsResponse.getAccounts();
+            if( accounts != null && !accounts.isEmpty()){
+                throw new DeleteException("User has associated bank accounts and cannot be deleted");
+            }
         }
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }
 
     private void verifyUser(String userId) {
+        if(!userService.existsById(userId)) {
+            throw new UserNotFoundException("User not found");
+        }
+
         var currentUserId = this.currentUser.getId();
 
         if (!userId.equals(currentUserId)) {
