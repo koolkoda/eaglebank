@@ -102,4 +102,8 @@ public class UserService {
     private String generateUserId() {
         return "usr-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     }
+
+    public boolean existsById(String userId) {
+        return users.containsKey(userId);
+    }
 }

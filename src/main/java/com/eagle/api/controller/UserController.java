@@ -5,6 +5,7 @@ import com.eagle.api.dto.UpdateUserRequest;
 import com.eagle.api.dto.UserResponse;
 import com.eagle.api.exception.DeleteException;
 import com.eagle.api.exception.ForbiddenException;
+import com.eagle.api.exception.UserNotFoundException;
 import com.eagle.api.security.CurrentUser;
 import com.eagle.api.service.AccountService;
 import com.eagle.api.service.UserService;
@@ -33,6 +34,9 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> fetchUser(@PathVariable String userId) {
+        if(!userService.existsById(userId)) {
+            throw new UserNotFoundException("User not found");
+        }
         verifyUser(userId);
 
         return ResponseEntity.ok(userService.getUser(userId));
