@@ -39,6 +39,7 @@ public class UserService {
         userResponse.setEmail(req.getEmail());
         userResponse.setCreatedTimestamp(now.toString());
         userResponse.setUpdatedTimestamp(now.toString());
+
         users.put(id, userResponse);
         emailToId.put(req.getEmail(), id);
 
@@ -64,8 +65,10 @@ public class UserService {
         if (req.getAddress() != null) userResponse.setAddress(req.getAddress());
         if (req.getPhoneNumber() != null) userResponse.setPhoneNumber(req.getPhoneNumber());
         if (req.getEmail() != null) userResponse.setEmail(req.getEmail());
+
         userResponse.setUpdatedTimestamp(Instant.now().toString());
         users.put(userId, userResponse);
+
         return userResponse;
     }
 
