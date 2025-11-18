@@ -1,12 +1,18 @@
 package com.eagle.api.exception;
 
+import com.eagle.api.dto.BadRequestErrorResponse;
 import com.eagle.api.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @ControllerAdvice
@@ -18,8 +24,11 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new ErrorResponse(ex.getMessage()));
+    public ResponseEntity<BadRequestErrorResponse> handleBadRequest(IllegalArgumentException ex) {
+        BadRequestErrorResponse resp = new BadRequestErrorResponse();
+        resp.setMessage(ex.getMessage());
+        resp.setDetails(null);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
     }
 
     @ExceptionHandler(DeleteException.class)
@@ -28,8 +37,20 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(Exception e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid details supplied"));
+    public ResponseEntity<BadRequestErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        BadRequestErrorResponse resp = new BadRequestErrorResponse();
+        resp.setMessage("Invalid details supplied");
+
+        List<Map<String, String>> details = new ArrayList<>();
+        for (FieldError fe : e.getBindingResult().getFieldErrors()) {
+            Map<String, String> m = new HashMap<>();
+            m.put("field", fe.getField());
+            m.put("message", fe.getDefaultMessage());
+            details.add(m);
+        }
+        resp.setDetails(details);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resp);
     }
 
     @ExceptionHandler(ForbiddenException.class)
