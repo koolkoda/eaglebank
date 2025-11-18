@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: api
+  profiles:
+    active: local
+
+# Read JWT secret from the environment variable JWT_SECRET. If not set, default to empty so
+# the JwtTokenService can auto-generate a secure secret when running with the 'local' profile.
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration-ms: 3600000
+
