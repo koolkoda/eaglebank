@@ -5,11 +5,11 @@ import com.eagle.api.dto.UpdateUserRequest;
 import com.eagle.api.dto.UserResponse;
 import com.eagle.api.exception.DeleteException;
 import com.eagle.api.exception.ForbiddenException;
+import com.eagle.api.security.CurrentUser;
 import com.eagle.api.service.AccountService;
 import com.eagle.api.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
     private final AccountService accountService;
+    private final CurrentUser currentUser;
 
-    public UserController(UserService userService, AccountService accountService) {
+    public UserController(UserService userService, AccountService accountService, CurrentUser currentUser) {
         this.userService = userService;
         this.accountService = accountService;
+        this.currentUser = currentUser;
     }
 
     @PostMapping
@@ -55,9 +57,7 @@ public class UserController {
     }
 
     private void verifyUser(String userId) {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        var currentUserId = this.userService.getUserIdByEmail(email);
+        var currentUserId = this.currentUser.getId();
 
         if (!userId.equals(currentUserId)) {
             throw new ForbiddenException("Access denied");

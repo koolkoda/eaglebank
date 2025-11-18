@@ -4,12 +4,11 @@ import com.eagle.api.dto.BankAccountResponse;
 import com.eagle.api.dto.CreateBankAccountRequest;
 import com.eagle.api.dto.ListBankAccountsResponse;
 import com.eagle.api.dto.UpdateBankAccountRequest;
-import com.eagle.api.exception.UnauthorizedException;
+import com.eagle.api.security.CurrentUser;
 import com.eagle.api.service.AccountService;
 import com.eagle.api.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,60 +16,38 @@ import org.springframework.web.bind.annotation.*;
 public class AccountController {
 
     private final AccountService accountService;
-    private final UserService userService;
+    private final CurrentUser currentUser;
 
-    public AccountController(AccountService accountService, UserService userService) {
+    public AccountController(AccountService accountService, UserService userService, CurrentUser currentUser) {
         this.accountService = accountService;
-        this.userService = userService;
+        this.currentUser = currentUser;
     }
 
     @PostMapping
     public ResponseEntity<BankAccountResponse> createAccount(@Valid @RequestBody CreateBankAccountRequest req) {
-        BankAccountResponse created = accountService.createAccount(getCurrentUserId(), req);
+        BankAccountResponse created = accountService.createAccount(currentUser.getId(), req);
         return ResponseEntity.status(201).body(created);
     }
 
     @GetMapping
     public ResponseEntity<ListBankAccountsResponse> listAccounts() {
-        return ResponseEntity.ok(accountService.listAccounts(getCurrentUserId()));
+        return ResponseEntity.ok(accountService.listAccounts(currentUser.getId()));
     }
 
     @GetMapping("/{accountNumber}")
     public ResponseEntity<BankAccountResponse> fetchAccount(@PathVariable String accountNumber) {
-        return ResponseEntity.ok(accountService.getAccount(getCurrentUserId(), accountNumber));
+        return ResponseEntity.ok(accountService.getAccount(currentUser.getId(), accountNumber));
     }
 
     @PatchMapping("/{accountNumber}")
     public ResponseEntity<BankAccountResponse> updateAccount(@PathVariable String accountNumber,
                                                              @Valid @RequestBody UpdateBankAccountRequest req) {
-        return ResponseEntity.ok(accountService.updateAccount(getCurrentUserId(), accountNumber, req));
+        return ResponseEntity.ok(accountService.updateAccount(currentUser.getId(), accountNumber, req));
     }
 
     @DeleteMapping("/{accountNumber}")
     public ResponseEntity<Void> deleteAccount(@PathVariable String accountNumber) {
-        accountService.deleteAccount(getCurrentUserId(), accountNumber);
+        accountService.deleteAccount(currentUser.getId(), accountNumber);
         return ResponseEntity.noContent().build();
-    }
-
-    // Validate that the security context and authentication exist before accessing them.
-    private String getCurrentUserId() {
-        var context = SecurityContextHolder.getContext();
-
-        var auth = context.getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new UnauthorizedException("Unauthenticated request");
-        }
-
-        String email = auth.getName();
-        if (email == null || email.isBlank()) {
-            throw new UnauthorizedException("Unauthenticated request");
-        }
-
-        String userId = this.userService.getUserIdByEmail(email);
-        if (userId == null || userId.isBlank()) {
-            throw new UnauthorizedException("User not found");
-        }
-
-        return userId;
     }
 }
