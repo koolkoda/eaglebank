@@ -28,7 +28,7 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid() {
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(Exception e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid details supplied"));
     }
 

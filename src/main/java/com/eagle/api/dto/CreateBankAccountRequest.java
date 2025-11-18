@@ -7,6 +7,5 @@ import lombok.Data;
 public class CreateBankAccountRequest {
     @NotBlank
     private String name;
-    @NotBlank
     private AccountType accountType;
 }
