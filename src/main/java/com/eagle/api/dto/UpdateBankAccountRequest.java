@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class UpdateBankAccountRequest {
     private String name;
-    private String accountType;
+    private AccountType accountType;
 }

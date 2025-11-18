@@ -8,5 +8,5 @@ public class CreateBankAccountRequest {
     @NotBlank
     private String name;
     @NotBlank
-    private String accountType;
+    private AccountType accountType;
 }

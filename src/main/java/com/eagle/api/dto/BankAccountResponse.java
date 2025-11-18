@@ -9,7 +9,7 @@ public class BankAccountResponse {
     private String accountNumber;
     private String sortCode;
     private String name;
-    private String accountType;
+    private AccountType accountType;
     private BigDecimal balance;
     private String currency;
     private String createdTimestamp;
