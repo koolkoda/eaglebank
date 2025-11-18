@@ -23,32 +23,32 @@ public class AccountService {
     public BankAccountResponse createAccount(String userId, CreateBankAccountRequest req) {
         String accNum = generateAccountNumber();
         Instant now = Instant.now();
-        BankAccountResponse a = new BankAccountResponse();
-        a.setAccountNumber(accNum);
-        a.setSortCode("10-10-10");
-        a.setName(req.getName());
-        a.setAccountType(req.getAccountType());
-        a.setBalance(BigDecimal.ZERO);
-        a.setCurrency("GBP");
-        a.setCreatedTimestamp(now.toString());
-        a.setUpdatedTimestamp(now.toString());
-        accounts.put(accNum, a);
+        BankAccountResponse bankAccountResponse = new BankAccountResponse();
+        bankAccountResponse.setAccountNumber(accNum);
+        bankAccountResponse.setSortCode("10-10-10");
+        bankAccountResponse.setName(req.getName());
+        bankAccountResponse.setAccountType(req.getAccountType());
+        bankAccountResponse.setBalance(BigDecimal.ZERO);
+        bankAccountResponse.setCurrency("GBP");
+        bankAccountResponse.setCreatedTimestamp(now.toString());
+        bankAccountResponse.setUpdatedTimestamp(now.toString());
+        accounts.put(accNum, bankAccountResponse);
 
         userAccounts.put(userId, accNum);
-        return a;
+        return bankAccountResponse;
     }
 
     public ListBankAccountsResponse listAccounts(String userId) {
-        ListBankAccountsResponse r = new ListBankAccountsResponse();
+        ListBankAccountsResponse listBankAccountsResponse = new ListBankAccountsResponse();
 
         var accountIds = userAccounts.get(userId);
         for(String accId : accountIds) {
-            BankAccountResponse a = accounts.get(accId);
-            if (a != null) {
-                r.getAccounts().add(a);
+            BankAccountResponse bankAccountResponse = accounts.get(accId);
+            if (bankAccountResponse != null) {
+                listBankAccountsResponse.getAccounts().add(bankAccountResponse);
             }
         }
-        return r;
+        return listBankAccountsResponse;
     }
 
     public BankAccountResponse getAccount(String userId, String accountNumber) {
@@ -80,20 +80,20 @@ public class AccountService {
 
     // internal helpers
     private String generateAccountNumber() {
-        Random r = new Random();
-        int n = r.nextInt(1_000_000);
+        Random random = new Random();
+        int n = random.nextInt(1_000_000);
         return String.format("01%06d", n);
     }
 
     // used by TransactionService
     public void adjustBalance(String userId, String accountNumber, BigDecimal delta) {
-        BankAccountResponse a = getAccount(userId, accountNumber);
-        BigDecimal newBal = a.getBalance().add(delta);
+        BankAccountResponse bankAccountResponse = getAccount(userId, accountNumber);
+        BigDecimal newBal = bankAccountResponse.getBalance().add(delta);
         if (newBal.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalStateException("Insufficient funds");
         }
-        a.setBalance(newBal);
-        a.setUpdatedTimestamp(Instant.now().toString());
-        accounts.put(accountNumber, a);
+        bankAccountResponse.setBalance(newBal);
+        bankAccountResponse.setUpdatedTimestamp(Instant.now().toString());
+        accounts.put(accountNumber, bankAccountResponse);
     }
 }

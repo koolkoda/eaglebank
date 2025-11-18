@@ -32,24 +32,24 @@ public class TransactionService {
             throw new IllegalArgumentException("Insufficient funds");
         }
 
-        TransactionResponse tr = new TransactionResponse();
-        tr.setId(generateTransactionId());
-        tr.setAmount(amount);
-        tr.setCurrency(req.getCurrency());
-        tr.setType(req.getType());
-        tr.setReference(req.getReference());
-        tr.setCreatedTimestamp(Instant.now().toString());
+        TransactionResponse transactionResponse = new TransactionResponse();
+        transactionResponse.setId(generateTransactionId());
+        transactionResponse.setAmount(amount);
+        transactionResponse.setCurrency(req.getCurrency());
+        transactionResponse.setType(req.getType());
+        transactionResponse.setReference(req.getReference());
+        transactionResponse.setCreatedTimestamp(Instant.now().toString());
 
-        store.computeIfAbsent(accountNumber, k -> new ConcurrentHashMap<>()).put(tr.getId(), tr);
-        return tr;
+        store.computeIfAbsent(accountNumber, k -> new ConcurrentHashMap<>()).put(transactionResponse.getId(), transactionResponse);
+        return transactionResponse;
     }
 
     public ListTransactionsResponse listTransactions(String userId, String accountNumber) {
         accountService.getAccount(userId, accountNumber);
         List<TransactionResponse> list = new ArrayList<>(store.getOrDefault(accountNumber, Collections.emptyMap()).values());
-        ListTransactionsResponse r = new ListTransactionsResponse();
-        r.setTransactions(list);
-        return r;
+        ListTransactionsResponse listTransactionsResponse = new ListTransactionsResponse();
+        listTransactionsResponse.setTransactions(list);
+        return listTransactionsResponse;
     }
 
     public TransactionResponse getTransaction(String userId, String accountNumber, String transactionId) {

@@ -31,15 +31,15 @@ public class UserService {
     public UserResponse createUser(CreateUserRequest req) {
         String id = generateUserId();
         Instant now = Instant.now();
-        UserResponse u = new UserResponse();
-        u.setId(id);
-        u.setName(req.getName());
-        u.setAddress(req.getAddress());
-        u.setPhoneNumber(req.getPhoneNumber());
-        u.setEmail(req.getEmail());
-        u.setCreatedTimestamp(now.toString());
-        u.setUpdatedTimestamp(now.toString());
-        users.put(id, u);
+        UserResponse userResponse = new UserResponse();
+        userResponse.setId(id);
+        userResponse.setName(req.getName());
+        userResponse.setAddress(req.getAddress());
+        userResponse.setPhoneNumber(req.getPhoneNumber());
+        userResponse.setEmail(req.getEmail());
+        userResponse.setCreatedTimestamp(now.toString());
+        userResponse.setUpdatedTimestamp(now.toString());
+        users.put(id, userResponse);
         emailToId.put(req.getEmail(), id);
 
         UserDetails userDetails = User.withUsername(req.getEmail())
@@ -49,24 +49,24 @@ public class UserService {
 
         this.userDetailsManager.createUser(userDetails);
 
-        return u;
+        return userResponse;
     }
 
     public UserResponse getUser(String userId) {
-        UserResponse u = users.get(userId);
-        if (u == null) throw new NoSuchElementException("User not found");
-        return u;
+        UserResponse userResponse = users.get(userId);
+        if (userResponse == null) throw new NoSuchElementException("User not found");
+        return userResponse;
     }
 
     public UserResponse updateUser(String userId, UpdateUserRequest req) {
-        UserResponse u = getUser(userId);
-        if (req.getName() != null) u.setName(req.getName());
-        if (req.getAddress() != null) u.setAddress(req.getAddress());
-        if (req.getPhoneNumber() != null) u.setPhoneNumber(req.getPhoneNumber());
-        if (req.getEmail() != null) u.setEmail(req.getEmail());
-        u.setUpdatedTimestamp(Instant.now().toString());
-        users.put(userId, u);
-        return u;
+        UserResponse userResponse = getUser(userId);
+        if (req.getName() != null) userResponse.setName(req.getName());
+        if (req.getAddress() != null) userResponse.setAddress(req.getAddress());
+        if (req.getPhoneNumber() != null) userResponse.setPhoneNumber(req.getPhoneNumber());
+        if (req.getEmail() != null) userResponse.setEmail(req.getEmail());
+        userResponse.setUpdatedTimestamp(Instant.now().toString());
+        users.put(userId, userResponse);
+        return userResponse;
     }
 
     public void deleteUser(String userId) {

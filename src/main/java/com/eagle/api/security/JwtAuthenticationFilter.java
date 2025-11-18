@@ -17,19 +17,23 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     private final JwtTokenService jwt;
-    private final UserDetailsService uds;
+    private final UserDetailsService userDetailsService;
     private final ObjectMapper objectMapper;
 
-    public JwtAuthenticationFilter(JwtTokenService jwt, UserDetailsService uds, ObjectMapper objectMapper) {
+    public JwtAuthenticationFilter(JwtTokenService jwt, UserDetailsService userDetailsService, ObjectMapper objectMapper) {
         this.jwt = jwt;
-        this.uds = uds;
+        this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
     }
 
@@ -41,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            sendForbidden(response, "Missing Authorization header");
+            sendUnauthorized(response, "Missing Authorization header");
             return;
         }
 
@@ -49,19 +53,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String username = jwt.extractUsername(token);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails user = uds.loadUserByUsername(username);
+                UserDetails user = userDetailsService.loadUserByUsername(username);
                 if (jwt.isTokenValid(token, user)) {
                     var auth = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 } else {
-                    sendForbidden(response, "Invalid JWT token");
+                    sendUnauthorized(response, "Invalid JWT token");
                     return;
                 }
-
             }
-        } catch (Exception ignored) {
-            sendForbidden(response, "Invalid JWT token");
+
+        } catch (Exception e) {
+            log.error("Error while validating JWT for request {} {}: {}", request.getMethod(), request.getServletPath(), e.getMessage());
+            sendUnauthorized(response, "Invalid JWT token");
             return;
         }
         filterChain.doFilter(request, response);
@@ -74,8 +79,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.equals("/v1/users");
     }
 
-    private void sendForbidden(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+
+    private void sendUnauthorized(HttpServletResponse response, String message) throws IOException {
+        log.warn("Sending 401 Unauthorized: {}", message);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         var errorMsg = new ErrorResponse(message);
         String body = objectMapper.writeValueAsString(errorMsg);

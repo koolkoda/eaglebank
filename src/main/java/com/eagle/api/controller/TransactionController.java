@@ -15,30 +15,30 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/v1/accounts/{accountNumber}/transactions")
 public class TransactionController {
 
-    private final TransactionService svc;
+    private final TransactionService transactionService;
     private final UserService userService;
 
-    public TransactionController(TransactionService svc, UserService userService) {
-        this.svc = svc;
+    public TransactionController(TransactionService transactionService, UserService userService) {
+        this.transactionService = transactionService;
         this.userService = userService;
     }
 
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@PathVariable String accountNumber,
                                                                  @Valid @RequestBody CreateTransactionRequest req) {
-        TransactionResponse tr = svc.createTransaction(getCurrentUserId(), accountNumber, req);
-        return ResponseEntity.status(201).body(tr);
+        TransactionResponse transactionResponse = transactionService.createTransaction(getCurrentUserId(), accountNumber, req);
+        return ResponseEntity.status(201).body(transactionResponse);
     }
 
     @GetMapping
     public ResponseEntity<ListTransactionsResponse> listTransactions(@PathVariable String accountNumber) {
-        return ResponseEntity.ok(svc.listTransactions(getCurrentUserId(), accountNumber));
+        return ResponseEntity.ok(transactionService.listTransactions(getCurrentUserId(), accountNumber));
     }
 
     @GetMapping("/{transactionId}")
     public ResponseEntity<TransactionResponse> fetchTransaction(@PathVariable String accountNumber,
                                                                 @PathVariable String transactionId) {
-        return ResponseEntity.ok(svc.getTransaction(getCurrentUserId(), accountNumber, transactionId));
+        return ResponseEntity.ok(transactionService.getTransaction(getCurrentUserId(), accountNumber, transactionId));
     }
 
     private String getCurrentUserId() {
