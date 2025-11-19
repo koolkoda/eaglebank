@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 public class TransactionResponse {
     private String id;
     private BigDecimal amount;
-    private String currency;
+    private Currency currency;
     private TransactionType type;
     private String reference;
     private String userId;
