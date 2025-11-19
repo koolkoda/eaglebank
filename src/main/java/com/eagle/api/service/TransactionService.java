@@ -3,6 +3,7 @@ package com.eagle.api.service;
 import com.eagle.api.dto.CreateTransactionRequest;
 import com.eagle.api.dto.ListTransactionsResponse;
 import com.eagle.api.dto.TransactionResponse;
+import com.eagle.api.dto.TransactionType;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,7 +25,7 @@ public class TransactionService {
         // validate account existence
         accountService.getAccount(userId, accountNumber);
         BigDecimal amount = req.getAmount();
-        BigDecimal delta = req.getType().equals("deposit") ? amount : amount.negate();
+        BigDecimal delta = req.getType().equals(TransactionType.DEPOSIT) ? amount : amount.negate();
 
         try {
             accountService.adjustBalance(userId, accountNumber, delta);
