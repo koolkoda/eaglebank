@@ -13,6 +13,6 @@ public class CreateTransactionRequest {
     @NotBlank
     private String currency;
     @NotBlank
-    private String type;
+    private TransactionType type;
     private String reference;
 }

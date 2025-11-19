@@ -79,7 +79,9 @@ public class AccountService {
             throw new NoSuchElementException("Account not found");
         }
 
+        userAccounts.remove(userId, accountNumber);
         accounts.remove(accountNumber);
+        accountToUser.remove(accountNumber);
     }
 
     // internal helpers
