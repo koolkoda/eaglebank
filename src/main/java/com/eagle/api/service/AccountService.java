@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AccountService {
     private final Map<String, BankAccountResponse> accounts = new ConcurrentHashMap<>();
     private final SetMultimap<String, String> userAccounts = HashMultimap.create();
+    private final Map<String, String> accountToUser = new ConcurrentHashMap<>();
 
     public BankAccountResponse createAccount(String userId, CreateBankAccountRequest req) {
         String accNum = generateAccountNumber();
@@ -32,14 +34,16 @@ public class AccountService {
         bankAccountResponse.setCurrency("GBP");
         bankAccountResponse.setCreatedTimestamp(now.toString());
         bankAccountResponse.setUpdatedTimestamp(now.toString());
-        accounts.put(accNum, bankAccountResponse);
 
+        accounts.put(accNum, bankAccountResponse);
+        accountToUser.put(accNum, userId);
         userAccounts.put(userId, accNum);
         return bankAccountResponse;
     }
 
     public ListBankAccountsResponse listAccounts(String userId) {
         ListBankAccountsResponse listBankAccountsResponse = new ListBankAccountsResponse();
+        listBankAccountsResponse.setAccounts(new ArrayList<>());
 
         var accountIds = userAccounts.get(userId);
         for(String accId : accountIds) {
@@ -95,5 +99,13 @@ public class AccountService {
         bankAccountResponse.setBalance(newBal);
         bankAccountResponse.setUpdatedTimestamp(Instant.now().toString());
         accounts.put(accountNumber, bankAccountResponse);
+    }
+
+    public String getAccountOwner(String accountNumber) {
+        return accountToUser.get(accountNumber);
+    }
+
+    public boolean accountExists(String accountNumber) {
+        return accountToUser.containsKey(accountNumber);
     }
 }
