@@ -4,6 +4,7 @@ import com.eagle.api.dto.CreateTransactionRequest;
 import com.eagle.api.dto.ListTransactionsResponse;
 import com.eagle.api.dto.TransactionResponse;
 import com.eagle.api.dto.TransactionType;
+import com.eagle.api.exception.InsufficientFundsException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TransactionService {
 
     private final Map<String, Map<String, TransactionResponse>> store = new ConcurrentHashMap<>();
+    private final Set<String> transactionIds = Collections.synchronizedSet(new HashSet<>());
     private final AccountService accountService;
 
     public TransactionService(AccountService accountService) {
@@ -30,7 +32,7 @@ public class TransactionService {
         try {
             accountService.adjustBalance(userId, accountNumber, delta);
         } catch (IllegalStateException e) {
-            throw new IllegalArgumentException("Insufficient funds");
+            throw new InsufficientFundsException("Insufficient funds");
         }
 
         TransactionResponse transactionResponse = new TransactionResponse();
@@ -42,6 +44,8 @@ public class TransactionService {
         transactionResponse.setCreatedTimestamp(Instant.now().toString());
 
         store.computeIfAbsent(accountNumber, k -> new ConcurrentHashMap<>()).put(transactionResponse.getId(), transactionResponse);
+        transactionIds.add(transactionResponse.getId());
+
         return transactionResponse;
     }
 
@@ -62,5 +66,9 @@ public class TransactionService {
 
     private String generateTransactionId() {
         return "tan-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+    }
+
+    public boolean transactionExists(String transactionId) {
+        return transactionIds.contains(transactionId);
     }
 }
